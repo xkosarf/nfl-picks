@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Sign in · NFL Pick'em{% endblock %}
+{% block content %}
+<section class="login">
+  <h1>Pick'em</h1>
+  <p class="lede">Call the winner of every NFL game, week by week.</p>
+  <form method="post" action="/login" class="login-form">
+    {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+    <label>Email
+      <input type="email" name="email" value="{{ email }}" autocomplete="username" required autofocus>
+    </label>
+    <label>Password
+      <input type="password" name="password" autocomplete="current-password" required>
+    </label>
+    <button type="submit" class="primary">Sign in</button>
+  </form>
+</section>
+{% endblock %}

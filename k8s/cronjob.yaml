@@ -1,0 +1,50 @@
+# Pulls schedule and final scores from ESPN every hour. Picks are graded
+# against the stored winner, so results appear within an hour of a final.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: nfl-picks-sync
+spec:
+  schedule: "7 * * * *"
+  timeZone: Etc/UTC
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 600
+      template:
+        metadata:
+          labels: {app: nfl-picks-sync}
+        spec:
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            fsGroup: 10001
+            seccompProfile: {type: RuntimeDefault}
+          containers:
+            - name: sync
+              image: ghcr.io/xkosarf/nfl-picks
+              command: ["python", "-m", "app.sync"]
+              envFrom:
+                - secretRef: {name: nfl-picks-secrets}
+              env:
+                - {name: DATABASE_PATH, value: /data/nfl.db}
+              resources:
+                requests: {cpu: 20m, memory: 64Mi}
+                limits: {cpu: 250m, memory: 192Mi}
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities: {drop: [ALL]}
+              volumeMounts:
+                - {name: data, mountPath: /data}
+                - {name: tmp, mountPath: /tmp}
+          volumes:
+            - name: data
+              persistentVolumeClaim: {claimName: nfl-picks-data}
+            - name: tmp
+              emptyDir: {}

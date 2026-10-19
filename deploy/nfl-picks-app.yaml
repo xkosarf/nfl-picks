@@ -1,0 +1,25 @@
+# Copy this file into the cluster repo as
+#   clusters/k3s-hetzner/nfl-picks/nfl-picks-app.yaml
+# The root app picks it up on the next sync.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nfl-picks
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/xkosarf/nfl-picks.git
+    targetRevision: main
+    path: k8s
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nfl-picks
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

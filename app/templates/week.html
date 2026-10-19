@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Week {{ week }} · NFL Pick'em{% endblock %}
+{% block content %}
+<section class="week-head">
+  <div class="week-title">
+    <p class="season">{{ season }} regular season</p>
+    <h1>Week {{ week }}</h1>
+  </div>
+  <dl class="tally" aria-label="Correct picks this week">
+    {% for s in scores %}
+    <div class="{{ 'me' if s.me }}">
+      <dt>{{ s.name }}</dt>
+      <dd>{{ s.correct }}</dd>
+    </div>
+    {% endfor %}
+  </dl>
+</section>
+
+<p class="status-line" id="status-line" data-open="{{ open_count }}">
+  {% if not games %}
+    The schedule for week {{ week }} isn't loaded yet. It syncs from ESPN every hour.
+  {% elif missing %}
+    You still have <strong id="missing-count">{{ missing }}</strong> {{ 'game' if missing == 1 else 'games' }} to pick.
+  {% elif open_count %}
+    All picks in. You can change them until each game kicks off.
+  {% elif graded == games|length %}
+    All {{ games|length }} games are final.
+  {% else %}
+    Every game has kicked off. Results come in as games finish ({{ graded }} of {{ games|length }} final).
+  {% endif %}
+</p>
+
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+
+{% for day, items in days %}
+<section class="day">
+  <h2>{{ items[0].kickoff_dt|day }}</h2>
+  {% for g in items %}
+  <article class="game {{ 'locked' if g.locked }} {{ 'result-' ~ g.result if g.result }}" id="game-{{ g.id }}">
+    <div class="meta">
+      <time datetime="{{ g.kickoff }}">{{ g.kickoff_dt|time }}</time>
+      {% if g.winner == 'tie' %}<span class="state">Final, tie</span>
+      {% elif g.winner %}<span class="state">Final</span>
+      {% elif g.state == 'in' %}<span class="state live">Live</span>
+      {% elif g.locked %}<span class="state">Locked</span>
+      {% endif %}
+      {% if g.result == 'correct' %}<span class="verdict good">You got it</span>
+      {% elif g.result == 'wrong' %}<span class="verdict bad">{{ 'No pick' if not g.mine else 'Missed' }}</span>
+      {% elif g.locked and not g.mine %}<span class="verdict bad">No pick</span>
+      {% endif %}
+    </div>
+    <form method="post" action="/pick" class="teams">
+      <input type="hidden" name="game_id" value="{{ g.id }}">
+      {% for side in ['away', 'home'] %}
+      {% set color = g[side ~ '_color'] %}
+      <button type="submit" name="pick" value="{{ side }}"
+              class="team {{ side }} {{ 'picked' if g.mine == side }} {{ 'won' if g.winner == side }} {{ 'lost' if g.winner and g.winner not in (side, 'tie') }}"
+              style="--team: {{ color|team_color }}; --on-team: {{ color|text_on }}"
+              aria-pressed="{{ 'true' if g.mine == side else 'false' }}"
+              aria-label="Pick the {{ g[side ~ '_name'] }}"
+              {% if g.locked %}disabled{% endif %}>
+        {% if g[side ~ '_logo'] %}<img src="{{ g[side ~ '_logo'] }}" alt="" width="36" height="36" loading="lazy" onerror="this.remove()">{% endif %}
+        <span class="label">
+          <span class="abbr">{{ g[side ~ '_abbr'] }}</span>
+          <span class="name">{{ g[side ~ '_short'] }}</span>
+        </span>
+        {% if g[side ~ '_score'] is not none %}<span class="score">{{ g[side ~ '_score'] }}</span>{% endif %}
+      </button>
+      {% if loop.first %}<span class="at" aria-hidden="true">at</span>{% endif %}
+      {% endfor %}
+    </form>
+    {% for o in g.others %}
+    <p class="other {{ 'result-' ~ o.result if o.result }}">
+      {% if o.pick %}{{ o.name }} picked the {{ g[o.pick ~ '_short'] }}{% if o.result == 'correct' %} and got it{% elif o.result == 'wrong' %} and missed{% endif %}.
+      {% else %}{{ o.name }} hasn't picked yet.{% endif %}
+    </p>
+    {% endfor %}
+  </article>
+  {% endfor %}
+</section>
+{% endfor %}
+
+<nav class="weeks" aria-label="Other weeks">
+  {% if prev_week %}<a href="/week/{{ prev_week }}" rel="prev">Week {{ prev_week }}</a>{% else %}<span></span>{% endif %}
+  {% if week != this_week %}<a href="/week/{{ this_week }}" class="this-week">Back to week {{ this_week }}</a>{% endif %}
+  {% if next_week %}<a href="/week/{{ next_week }}" rel="next">Week {{ next_week }}</a>{% else %}<span></span>{% endif %}
+</nav>
+{% endblock %}
+{% block scripts %}<script src="/static/app.js?v=1" defer></script>{% endblock %}

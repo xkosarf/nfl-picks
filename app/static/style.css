@@ -1,0 +1,178 @@
+/* NFL Pick'em — one quiet frame, and the team colours do the talking. */
+:root {
+  --chalk: #f4f6f2;      /* page */
+  --paper: #ffffff;      /* team tiles */
+  --ink: #172033;        /* text, header */
+  --ink-soft: #5b6475;
+  --line: #d7ddd4;
+  --turf: #2e6b3f;       /* correct */
+  --miss: #b4332b;       /* wrong */
+  --flag: #e8b52c;       /* still to do */
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --body: "Barlow", system-ui, sans-serif;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--chalk);
+  color: var(--ink);
+  font: 400 1rem/1.5 var(--body);
+}
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--flag); outline-offset: 2px; }
+
+/* Header */
+.bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: .75rem 1rem;
+  background: var(--ink); color: #fff;
+}
+.brand {
+  font: 800 1.5rem/1 var(--display); letter-spacing: .01em; text-decoration: none;
+}
+.bar nav { display: flex; align-items: center; gap: 1.25rem; font-weight: 500; }
+.bar nav a { text-decoration: none; opacity: .75; }
+.bar nav a[aria-current="page"] { opacity: 1; box-shadow: inset 0 -2px 0 var(--flag); }
+.bar nav form { margin: 0; }
+button.link {
+  background: none; border: 0; padding: 0; color: inherit; font: inherit; opacity: .75; cursor: pointer;
+}
+button.link:hover, .bar nav a:hover { opacity: 1; }
+
+main { max-width: 40rem; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+/* Week heading: the big number is the anchor of the page */
+.week-head {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+}
+.season { margin: 0; color: var(--ink-soft); font-weight: 500; }
+h1 {
+  margin: 0;
+  font: 800 clamp(3.25rem, 14vw, 5.5rem)/.85 var(--display);
+  letter-spacing: -.01em;
+}
+.tally { display: flex; gap: 1.5rem; margin: 0; }
+.tally div { text-align: right; }
+.tally dt { font-weight: 500; color: var(--ink-soft); }
+.tally dd { margin: 0; font: 700 2.5rem/1 var(--display); font-variant-numeric: tabular-nums; }
+.tally .me dt { color: var(--ink); }
+.tally .ahead dd { color: var(--turf); }
+
+.status-line { margin: 1rem 0 .5rem; color: var(--ink-soft); }
+.status-line strong { color: var(--ink); background: var(--flag); padding: 0 .3em; border-radius: 3px; }
+.error {
+  margin: 1rem 0; padding: .6rem .8rem; border-left: 4px solid var(--miss);
+  background: #fbeceb; color: #7d201a;
+}
+
+/* Days and games */
+.day h2 {
+  margin: 2rem 0 .5rem;
+  font: 600 1.1rem/1.2 var(--body);
+  padding-bottom: .4rem; border-bottom: 1px solid var(--line);
+}
+.game { padding: .75rem 0 .9rem 0; border-bottom: 1px solid var(--line); }
+.game.result-correct { box-shadow: inset 4px 0 0 var(--turf); padding-left: .75rem; }
+.game.result-wrong { box-shadow: inset 4px 0 0 var(--miss); padding-left: .75rem; }
+
+.meta {
+  display: flex; align-items: baseline; gap: .75rem; margin-bottom: .45rem;
+  font-size: .9rem; color: var(--ink-soft);
+}
+.meta time { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.state.live { color: var(--miss); font-weight: 600; }
+.verdict { margin-left: auto; font-weight: 600; }
+.verdict.good { color: var(--turf); }
+.verdict.bad { color: var(--miss); }
+
+.teams { display: grid; grid-template-columns: 1fr auto 1fr; align-items: stretch; gap: .5rem; margin: 0; }
+.at { align-self: center; color: var(--ink-soft); font-size: .85rem; }
+
+.team {
+  display: flex; align-items: center; gap: .6rem;
+  min-height: 4rem; padding: .5rem .7rem;
+  background: var(--paper); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 10px;
+  font: inherit; text-align: left; cursor: pointer;
+  transition: background-color .18s ease, color .18s ease, border-color .18s ease;
+}
+.team.home { flex-direction: row-reverse; text-align: right; }
+.team img { width: 36px; height: 36px; flex: none; object-fit: contain; }
+.team .label { display: flex; flex-direction: column; min-width: 0; }
+.team .abbr { font: 700 1.35rem/1 var(--display); letter-spacing: .02em; }
+.team .name { font-size: .85rem; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.team .score { margin-left: auto; font: 700 1.75rem/1 var(--display); font-variant-numeric: tabular-nums; }
+.team.home .score { margin-left: 0; margin-right: auto; }
+
+.team:not(:disabled):hover { border-color: var(--team); }
+/* The one loud thing: your pick takes on the team's own colour. */
+.team.picked { background: var(--team); border-color: var(--team); color: var(--on-team); }
+.team.picked .name { color: inherit; opacity: .85; }
+.team.picked img { filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, .9)); }
+
+.team:disabled { cursor: default; }
+.team.lost { opacity: .55; }
+.team.lost.picked { opacity: .7; }
+.team.pending { opacity: .6; }
+
+.other { margin: .45rem 0 0; font-size: .9rem; color: var(--ink-soft); }
+.other.result-correct { color: var(--turf); }
+.other.result-wrong { color: var(--miss); }
+
+@media (max-width: 26rem) {
+  .team { gap: .45rem; padding: .45rem .5rem; }
+  .team img { width: 28px; height: 28px; }
+  .team .name { display: none; }
+}
+
+/* Week navigation */
+.weeks {
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+  margin-top: 2rem; font: 600 1.15rem/1 var(--display);
+}
+.weeks a {
+  text-decoration: none; padding: .6rem .9rem; border: 1px solid var(--line); border-radius: 8px; background: var(--paper);
+}
+.weeks a:hover { border-color: var(--ink); }
+.weeks a[rel="prev"]::before { content: "‹ "; }
+.weeks a[rel="next"]::after { content: " ›"; }
+.weeks .this-week { border: 0; background: none; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Results */
+.standings { width: 100%; border-collapse: collapse; margin-top: 1rem; font-variant-numeric: tabular-nums; }
+.standings th, .standings td { padding: .55rem .5rem; border-bottom: 1px solid var(--line); text-align: left; }
+.standings thead th { font-weight: 600; color: var(--ink-soft); }
+.standings tbody th { font-weight: 500; }
+.standings tbody th a { text-decoration: none; }
+.standings tbody th a:hover { text-decoration: underline; }
+.standings .num { text-align: right; }
+.standings td.num { font: 600 1.25rem/1 var(--display); }
+.standings td.lead { color: var(--turf); }
+.standings td.muted { color: var(--ink-soft); font: 400 .95rem/1 var(--body); }
+.standings tr.pending th { color: var(--ink-soft); }
+.standings tfoot th, .standings tfoot td { border-bottom: 0; border-top: 2px solid var(--ink); padding-top: .7rem; }
+.standings tfoot td.num { font-size: 1.6rem; }
+.standings tfoot td.muted { font-size: .95rem; }
+.footnote { margin-top: 1rem; font-size: .9rem; color: var(--ink-soft); }
+
+/* Login */
+.login { max-width: 22rem; margin: 12vh auto 0; }
+.login .lede { margin: .75rem 0 1.75rem; color: var(--ink-soft); }
+.login-form { display: grid; gap: 1rem; }
+.login-form label { display: grid; gap: .35rem; font-weight: 500; }
+.login-form input {
+  font: inherit; padding: .7rem .8rem; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--ink);
+}
+.login-form input:focus { border-color: var(--ink); }
+button.primary {
+  font: 700 1.2rem/1 var(--display); letter-spacing: .02em;
+  padding: .85rem; border: 0; border-radius: 8px; background: var(--ink); color: #fff; cursor: pointer;
+}
+button.primary:hover { background: #26324a; }
+
+@media (prefers-reduced-motion: reduce) {
+  .team { transition: none; }
+}

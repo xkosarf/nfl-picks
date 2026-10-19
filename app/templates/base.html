@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#172033">
+  <title>{% block title %}NFL Pick'em{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css?v=1">
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+</head>
+<body>
+  {% if user %}
+  <header class="bar">
+    <a class="brand" href="/">Pick'em</a>
+    <nav>
+      <a href="/" {% if active == 'week' %}aria-current="page"{% endif %}>Games</a>
+      <a href="/results" {% if active == 'results' %}aria-current="page"{% endif %}>Results</a>
+      <form method="post" action="/logout"><button type="submit" class="link">Sign out</button></form>
+    </nav>
+  </header>
+  {% endif %}
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

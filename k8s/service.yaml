@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nfl-picks
+spec:
+  selector: {app: nfl-picks}
+  ports:
+    - {name: http, port: 80, targetPort: http}

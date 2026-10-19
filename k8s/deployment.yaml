@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nfl-picks
+  labels: {app: nfl-picks}
+spec:
+  replicas: 1
+  # SQLite on a ReadWriteOnce volume: never run two app pods at once.
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {app: nfl-picks}
+  template:
+    metadata:
+      labels: {app: nfl-picks}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: app
+          image: ghcr.io/xkosarf/nfl-picks
+          ports:
+            - {name: http, containerPort: 8000}
+          envFrom:
+            - secretRef: {name: nfl-picks-secrets}
+          env:
+            - {name: DATABASE_PATH, value: /data/nfl.db}
+            - {name: DISPLAY_TZ, value: Europe/Bratislava}
+          readinessProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: {path: /healthz, port: http}
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          resources:
+            requests: {cpu: 20m, memory: 64Mi}
+            limits: {cpu: 250m, memory: 192Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: data, mountPath: /data}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: data
+          persistentVolumeClaim: {claimName: nfl-picks-data}
+        - name: tmp
+          emptyDir: {}

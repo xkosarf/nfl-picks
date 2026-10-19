@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Results · NFL Pick'em{% endblock %}
+{% block content %}
+{% set people = table.users %}
+{% set best = table.totals.values()|max if table.totals else 0 %}
+<section class="week-head">
+  <div class="week-title">
+    <p class="season">{{ season }} regular season</p>
+    <h1>Results</h1>
+  </div>
+  <dl class="tally" aria-label="Season totals">
+    {% for u in people %}
+    <div class="{{ 'me' if u.id == user.id }} {{ 'ahead' if table.graded and table.totals[u.id] == best }}">
+      <dt>{{ u.name }}</dt>
+      <dd>{{ table.totals[u.id] }}</dd>
+    </div>
+    {% endfor %}
+  </dl>
+</section>
+
+<p class="status-line">
+  {% if not table.graded %}No games are final yet. Totals start counting after the first final score.
+  {% else %}Correct picks out of {{ table.graded }} final {{ 'game' if table.graded == 1 else 'games' }} this season.{% endif %}
+</p>
+
+{% if table.weeks %}
+<table class="standings">
+  <thead>
+    <tr>
+      <th scope="col">Week</th>
+      {% for u in people %}<th scope="col" class="num">{{ u.name }}</th>{% endfor %}
+      <th scope="col" class="num">Games final</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for w in table.weeks %}
+    <tr class="{{ 'pending' if not w.graded }}">
+      <th scope="row"><a href="/week/{{ w.week }}">Week {{ w.week }}</a></th>
+      {% for u in people %}
+      <td class="num {{ 'lead' if w.leader == u.id }}">{{ w.correct[u.id] if w.graded else '' }}</td>
+      {% endfor %}
+      <td class="num muted">{{ w.graded }}/{{ w.games }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr>
+      <th scope="row">Season</th>
+      {% for u in people %}<td class="num">{{ table.totals[u.id] }}</td>{% endfor %}
+      <td class="num muted">{{ table.graded }}</td>
+    </tr>
+  </tfoot>
+</table>
+<p class="footnote">A tie counts as a miss for both of you. A game you didn't pick counts as a miss.</p>
+{% endif %}
+{% endblock %}
