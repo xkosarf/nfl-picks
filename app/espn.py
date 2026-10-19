@@ -10,7 +10,19 @@ import httpx
 
 REGULAR_SEASON = 2
 TIMEOUT = httpx.Timeout(20.0)
-HEADERS = {"User-Agent": "nfl-picks/1.0 (+https://nfl.kosar.sk)"}
+# ESPN's CDN refuses requests that don't look like a browser (403 Forbidden).
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/130.0 Safari/537.36"
+    ),
+    "Accept": "application/json",
+}
+# Same API on two hostnames. site.web.api answers from Hetzner, site.api doesn't.
+DEFAULT_BASES = (
+    "https://site.web.api.espn.com/apis/site/v2/sports/football/nfl",
+    "https://site.api.espn.com/apis/site/v2/sports/football/nfl",
+)
 
 
 def _parse_kickoff(value: str) -> str:
@@ -80,14 +92,27 @@ def parse_event(event: dict, season: int, week: int) -> dict | None:
 
 
 class EspnClient:
-    def __init__(self, base_url: str, client: httpx.Client | None = None):
-        self.base_url = base_url.rstrip("/")
+    def __init__(self, base_url: str | None = None, client: httpx.Client | None = None):
+        bases = [base_url] if base_url else []
+        bases += [b for b in DEFAULT_BASES if b not in bases]
+        self.bases = [b.rstrip("/") for b in bases]
         self.client = client or httpx.Client(timeout=TIMEOUT, headers=HEADERS, follow_redirects=True)
 
     def _get(self, params: dict | None = None) -> dict:
-        resp = self.client.get(f"{self.base_url}/scoreboard", params=params)
-        resp.raise_for_status()
-        return resp.json()
+        """Try each hostname in turn; the first one that answers wins from then on."""
+        error: Exception | None = None
+        for i, base in enumerate(self.bases):
+            try:
+                resp = self.client.get(f"{base}/scoreboard", params=params)
+                resp.raise_for_status()
+                data = resp.json()
+            except (httpx.HTTPError, ValueError) as exc:
+                error = exc
+                continue
+            if i:
+                self.bases.insert(0, self.bases.pop(i))
+            return data
+        raise error
 
     def current(self) -> tuple[int, int, int]:
         """Return (season year, season type, week number) that ESPN considers current."""

@@ -43,11 +43,8 @@ class Settings:
     season: int | None = field(
         default_factory=lambda: int(os.environ["NFL_SEASON"]) if os.environ.get("NFL_SEASON") else None
     )
-    espn_base: str = field(
-        default_factory=lambda: os.environ.get(
-            "ESPN_BASE", "https://site.api.espn.com/apis/site/v2/sports/football/nfl"
-        )
-    )
+    # Optional override; app/espn.py has working defaults.
+    espn_base: str | None = field(default_factory=lambda: os.environ.get("ESPN_BASE") or None)
     cookie_secure: bool = field(default_factory=lambda: _env_bool("COOKIE_SECURE", True))
     users: list[UserConfig] = field(default_factory=_load_users)
 

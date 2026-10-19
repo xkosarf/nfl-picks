@@ -50,3 +50,23 @@ def test_password_hash_roundtrip():
     assert verify_password("correct horse", stored)
     assert not verify_password("wrong", stored)
     assert not verify_password("x", "garbage")
+
+
+def test_falls_back_to_second_espn_host():
+    import httpx
+
+    from app.espn import EspnClient
+
+    seen = []
+
+    def handler(request: httpx.Request):
+        seen.append(request.url.host)
+        if request.url.host == "blocked.test":
+            return httpx.Response(403)
+        return httpx.Response(200, json={"season": {"year": 2026, "type": 2}, "week": {"number": 7}})
+
+    client = EspnClient("https://blocked.test", client=httpx.Client(transport=httpx.MockTransport(handler)))
+    client.bases = ["https://blocked.test", "https://ok.test"]
+    assert client.current() == (2026, 2, 7)
+    assert client.current() == (2026, 2, 7)
+    assert seen == ["blocked.test", "ok.test", "ok.test"]  # remembers the host that works
