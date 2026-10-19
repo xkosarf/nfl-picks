@@ -10,4 +10,4 @@ resources:
 images:
   - name: ghcr.io/xkosarf/nfl-picks
     # Set by the release workflow on every push to main. Never "latest" (Kyverno blocks it).
-    newTag: sha-d9a1de1
+    newTag: sha-808b56c
